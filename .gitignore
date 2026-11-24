@@ -1,0 +1,10 @@
+# Secretos y configuración local
+.env
+*.env
+credentials*.json
+# Datos internos de n8n (base de datos, claves de cifrado)
+.n8n/
+*.sqlite
+# Sistema
+Thumbs.db
+.DS_Store

@@ -1,0 +1,370 @@
+{
+  "name": "Resumen diario de stock",
+  "nodes": [
+    {
+      "parameters": {
+        "fileSelector": "/home/node/datos/productos_inventados.csv",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.readWriteFile",
+      "typeVersion": 1.1,
+      "position": [
+        224,
+        0
+      ],
+      "id": "3751d19c-3418-455d-997b-b30cd328e295",
+      "name": "Read/Write Files from Disk"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.extractFromFile",
+      "typeVersion": 1.2,
+      "position": [
+        448,
+        0
+      ],
+      "id": "2c2a6434-9528-4cdb-a36d-dd97e89b79ed",
+      "name": "Extract from File"
+    },
+    {
+      "parameters": {
+        "sendTo": "tu-correo@ejemplo.com",
+        "subject": "Stock inventado",
+        "emailType": "text",
+        "message": "={{ (Object.keys($json.pedidos_por_proveedor).length > 0 ? 'PEDIDOS POR PROVEEDOR\\n\\n' + Object.entries($json.pedidos_por_proveedor).map(([proveedor, productos]) => proveedor + ' (coste: ' + productos.reduce((total, p) => total + p.coste_pedido, 0).toFixed(2) + ' €):\\n' + productos.map(p => `  - ${p.nombre}: pedir ${p.a_pedir} (hay ${p.stock}, mínimo ${p.stock_minimo})`).join('\\n')).join('\\n\\n') + '\\n\\nTOTAL: ' + Object.values($json.pedidos_por_proveedor).flat().reduce((total, p) => total + p.coste_pedido, 0).toFixed(2) + ' €' : 'No hay productos que pedir.') + '\\n' }}\n\n{{ $json.al_limite.length > 0 ? 'AL LÍMITE (dentro del stock mínimo, vigilar):\\n' + $json.al_limite.map(p => `  - ${p.nombre}: hay ${p.stock}, mínimo ${p.stock_minimo}`).join('\\n') : 'No hay productos al límite.' }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        1936,
+        -16
+      ],
+      "id": "0996897e-d0bf-4a07-ae34-e3cefd287592",
+      "name": "Send a message",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "REEMPLAZAR_ID_CREDENCIAL",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "aggregate": "aggregateAllItemData",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.aggregate",
+      "typeVersion": 1,
+      "position": [
+        1456,
+        -16
+      ],
+      "id": "4bf13785-7a47-4534-a077-61a4fd4bc125",
+      "name": "Aggregate"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 4
+          },
+          "conditions": [
+            {
+              "id": "34912984-af51-4dfb-be9b-1d36a9398f66",
+              "leftValue": "={{ $json.stock }}",
+              "rightValue": "={{ $json.stock_minimo }}",
+              "operator": {
+                "type": "number",
+                "operation": "lte"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.filter",
+      "typeVersion": 2.4,
+      "position": [
+        672,
+        0
+      ],
+      "id": "bd805b26-fc8e-42a0-9412-00f276114486",
+      "name": "Filter",
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "2a7c8dc0-44e3-4a5c-9a24-738a546de428",
+              "name": "a_pedir",
+              "value": "={{ $json.stock_minimo.toNumber()  -  $json.stock.toNumber() }}",
+              "type": "number"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        1040,
+        -16
+      ],
+      "id": "312fc2fd-4c90-4db1-bdd2-4749bbad54ee",
+      "name": "Edit Fields",
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 4
+          },
+          "conditions": [
+            {
+              "id": "3fd2b70b-0f0b-416e-b228-950df36a4f30",
+              "leftValue": "={{ $json.id }}",
+              "rightValue": 0,
+              "operator": {
+                "type": "string",
+                "operation": "exists",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.4,
+      "position": [
+        832,
+        0
+      ],
+      "id": "3e925e45-831d-40db-80fc-71958a660a31",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "sendTo": "tu-correo@ejemplo.com",
+        "subject": "Stock inventado",
+        "emailType": "text",
+        "message": "No hay ningún producto con faltante de Stock",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        976,
+        240
+      ],
+      "id": "46deeaa9-4648-42e1-950d-6d171b17abcb",
+      "name": "Send a message1",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "REEMPLAZAR_ID_CREDENCIAL",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "e2d01d2f-c53c-46f7-b9af-b10766ecfe01",
+              "name": "pedidos_por_proveedor",
+              "value": "={{ $json.data.filter(p => p.a_pedir > 0).reduce((grupos, p) => { (grupos[p.proveedor] ??= []).push(p); return grupos }, {}) }}",
+              "type": "object"
+            },
+            {
+              "id": "d40779c2-36af-4e00-9763-ba0196e42dfa",
+              "name": "al_limite",
+              "value": "={{ $json.data.filter(p => p.a_pedir == 0) }}",
+              "type": "array"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        1680,
+        -16
+      ],
+      "id": "d9408089-fd2a-47cd-a130-943de967a312",
+      "name": "Edit Fields1"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "fb994cf0-b0f8-40df-979a-059a51d8711e",
+              "name": "coste_pedido",
+              "value": "={{ $json.a_pedir * $json.precio_coste.toNumber().round(2) }}",
+              "type": "number"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        1264,
+        -16
+      ],
+      "id": "ea003125-d41d-42fe-9391-bb57eec3a373",
+      "name": "Edit Fields2"
+    },
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        -16,
+        0
+      ],
+      "id": "307fe92a-0c25-441c-b661-9ee563ab6d5e",
+      "name": "When clicking ‘Execute workflow’"
+    }
+  ],
+  "connections": {
+    "Read/Write Files from Disk": {
+      "main": [
+        [
+          {
+            "node": "Extract from File",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract from File": {
+      "main": [
+        [
+          {
+            "node": "Filter",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Aggregate": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filter": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Send a message1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields1": {
+      "main": [
+        [
+          {
+            "node": "Send a message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields2": {
+      "main": [
+        [
+          {
+            "node": "Aggregate",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "When clicking ‘Execute workflow’": {
+      "main": [
+        [
+          {
+            "node": "Read/Write Files from Disk",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": true,
+    "timeSavedMode": "fixed",
+    "callerPolicy": "workflowsFromSameOwner"
+  },
+  "pinData": {},
+  "meta": {},
+  "tags": [],
+  "active": false
+}

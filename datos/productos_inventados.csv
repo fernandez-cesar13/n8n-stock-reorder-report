@@ -1,0 +1,11 @@
+id,nombre,categoria,stock,stock_minimo,proveedor,precio_coste
+P001,Balón de baloncesto talla 7,Baloncesto,12,10,Deportes Rius SL,14.50
+P002,Red de canasta,Baloncesto,3,5,Deportes Rius SL,6.20
+P003,Botella de agua 750 ml,Accesorios,40,20,Plásticos Mediterrània SA,2.10
+P004,Calcetines de running (pack 3),Textil,8,15,Tèxtils Garbí SL,4.80
+P005,Esterilla de yoga,Fitness,0,6,FitSupply Ibérica SL,9.90
+P006,Mancuerna 5 kg,Fitness,14,8,FitSupply Ibérica SL,11.30
+P007,Gorra de running,Textil,22,10,Tèxtils Garbí SL,3.95
+P008,Raqueta de pádel de iniciación,Pádel,4,4,Pala Norte SL,27.00
+P009,Bote de pelotas de pádel,Pádel,2,12,Pala Norte SL,3.40
+P010,Cinta elástica de resistencia,Fitness,18,10,FitSupply Ibérica SL,5.60
