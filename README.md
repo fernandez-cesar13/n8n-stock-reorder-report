@@ -50,6 +50,34 @@ Así el asunto y el cuerpo llegan por separado al nodo de Gmail, en lugar de un 
 
 En `workflows/resumen-diario-stock.json` sigue el flujo anterior: un solo correo con el resumen de pedidos agrupado por proveedor, sin IA y sin borradores. El CSV, el Docker y el flujo de errores son los mismos.
 
+## Flujo de ventas por webhook
+
+En `workflows/flujo-ventas-webhook.json` hay un segundo flujo que complementa al de reposición: actualiza el stock en cuanto llega una venta y avisa a compras si un producto baja del mínimo.
+
+1. Un **Webhook** (POST) recibe la venta, por ejemplo `{"id": "P004", "cantidad_vendida": 7, "fecha": "2026-07-18"}`.
+2. Lee `productos_inventados.csv`, resta la cantidad vendida en un nodo **Code** (JavaScript) y vuelve a escribir el CSV con todas las filas.
+3. Un **Filter** se queda solo con el producto vendido y un **If** comprueba si `stock < stock_minimo`.
+4. Si es así, un **HTTP Request** manda un aviso a compras con `id`, `nombre`, `proveedor`, `stock` y `a_pedir` (`stock_minimo * 2 - stock`).
+5. En los dos casos, un **Edit Fields** añade una línea a `datos/log_ventas.csv` (`id, stock, stock_anterior, fecha, cantidad_vendida`) en modo Append, sin repetir la cabecera.
+
+Antes de usarlo, cambia `https://webhook.site/TU-URL-UNICA` en el nodo HTTP Request por la URL que deba recibir el aviso (para probar vale una de [webhook.site](https://webhook.site), y en un sistema real puede ser una API, por ejemplo en FastAPI, cambiando solo esa URL).
+
+Ejemplo de llamada con el flujo activo (con **Execute workflow** en modo prueba, usa `/webhook-test/` en lugar de `/webhook/`):
+
+```powershell
+Invoke-RestMethod -Method Post -Uri "http://localhost:5678/webhook/4fa3dd3c-8137-4bd0-b9d0-888f81f571d4" `
+  -ContentType "application/json" `
+  -Body '{"id": "P004", "cantidad_vendida": 7, "fecha": "2026-07-18"}'
+```
+
+```bash
+curl -X POST "http://localhost:5678/webhook/4fa3dd3c-8137-4bd0-b9d0-888f81f571d4" \
+  -H "Content-Type: application/json" \
+  -d '{"id": "P004", "cantidad_vendida": 7, "fecha": "2026-07-18"}'
+```
+
+Ojo: el flujo sobrescribe `productos_inventados.csv`, así que guarda una copia si quieres volver a los datos de ejemplo.
+
 ## Tecnologías
 
 - **n8n** (Community Edition) sobre **Docker**.
@@ -64,6 +92,7 @@ En `workflows/resumen-diario-stock.json` sigue el flujo anterior: un solo correo
 ├── workflows
 │   ├── agente-stock.json            # flujo actual: borradores por proveedor con IA
 │   ├── resumen-diario-stock.json    # versión anterior: un solo correo-resumen
+│   ├── flujo-ventas-webhook.json    # ventas por webhook: actualiza stock y avisa a compras
 │   └── error-workflow.json          # aviso por correo cuando algo falla
 ├── datos
 │   └── productos_inventados.csv     # inventario de ejemplo (datos ficticios)

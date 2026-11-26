@@ -1,0 +1,414 @@
+{
+  "name": "Ventas",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "4fa3dd3c-8137-4bd0-b9d0-888f81f571d4",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.2,
+      "position": [
+        0,
+        0
+      ],
+      "id": "72b68271-977b-4050-9d73-2595c6c1401d",
+      "name": "Webhook",
+      "webhookId": "4fa3dd3c-8137-4bd0-b9d0-888f81f571d4"
+    },
+    {
+      "parameters": {
+        "fileSelector": "/home/node/datos/productos_inventados.csv",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.readWriteFile",
+      "typeVersion": 1.1,
+      "position": [
+        224,
+        0
+      ],
+      "id": "68d7c4a7-b67f-48a8-922f-6851d908e004",
+      "name": "Read/Write Files from Disk"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.extractFromFile",
+      "typeVersion": 1.2,
+      "position": [
+        448,
+        0
+      ],
+      "id": "71dceff9-fbfb-4855-b608-b080886039ae",
+      "name": "Extract from File"
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "const fila = $json;\nconst venta = $('Webhook').item.json.body;\n\nif (String(fila.id) === String(venta.id)) {\n  fila.stock = Number(fila.stock) - Number(venta.cantidad_vendida);\n}\n\nreturn fila;"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        672,
+        0
+      ],
+      "id": "3b74575b-4640-493c-8d98-8c5709a864a9",
+      "name": "Code in JavaScript"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.convertToFile",
+      "typeVersion": 1.2,
+      "position": [
+        896,
+        0
+      ],
+      "id": "019ee272-d026-494d-9622-a85a1d13a623",
+      "name": "Convert to File"
+    },
+    {
+      "parameters": {
+        "operation": "write",
+        "fileName": "/home/node/datos/productos_inventados.csv",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.readWriteFile",
+      "typeVersion": 1.1,
+      "position": [
+        1120,
+        0
+      ],
+      "id": "683b11fd-b8b9-46ee-83a4-a770f49dd5dc",
+      "name": "Read/Write Files from Disk1"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 4
+          },
+          "conditions": [
+            {
+              "id": "7c310074-5243-491b-8622-6537162f452e",
+              "leftValue": "={{ $json.id }}",
+              "rightValue": "={{ $('Webhook').item.json.body.id }}",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.filter",
+      "typeVersion": 2.4,
+      "position": [
+        688,
+        256
+      ],
+      "id": "2296d993-ff83-4ca6-b5d7-3496d8a6ca12",
+      "name": "Filter"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "54c0a3bb-41cb-4e02-9708-05866ab9648f",
+              "name": "id",
+              "value": "={{ $('Filter').item.json.id }}",
+              "type": "string"
+            },
+            {
+              "id": "731d11da-77c0-4688-991e-6842ce2b8f39",
+              "name": "stock",
+              "value": "={{ $('Filter').item.json.stock }}",
+              "type": "number"
+            },
+            {
+              "id": "fdc48cc4-2d7b-47b4-b9b3-fab78639ccea",
+              "name": "stock_anterior",
+              "value": "={{ $('Extract from File').item.json.stock }}",
+              "type": "number"
+            },
+            {
+              "id": "63e9bcb8-1f7d-4fc1-b129-13ad33f6a460",
+              "name": "fecha",
+              "value": "={{ $('Webhook').item.json.body.fecha }}",
+              "type": "string"
+            },
+            {
+              "id": "be3e3053-fec3-45d5-82b8-ec7254b21c44",
+              "name": "cantidad_vendida",
+              "value": "={{ $('Webhook').item.json.body.cantidad_vendida}}",
+              "type": "number"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        1232,
+        448
+      ],
+      "id": "bfde2b51-7fa9-4d49-8f40-f5a83848c7b0",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "binaryPropertyName": "log",
+        "options": {
+          "headerRow": false
+        }
+      },
+      "type": "n8n-nodes-base.convertToFile",
+      "typeVersion": 1.2,
+      "position": [
+        1536,
+        448
+      ],
+      "id": "bcd1ac23-18cd-4ea5-8db1-faf2043b59aa",
+      "name": "Convert to File1"
+    },
+    {
+      "parameters": {
+        "operation": "write",
+        "fileName": "/home/node/datos/log_ventas.csv",
+        "dataPropertyName": "log",
+        "options": {
+          "append": true
+        }
+      },
+      "type": "n8n-nodes-base.readWriteFile",
+      "typeVersion": 1.1,
+      "position": [
+        1824,
+        448
+      ],
+      "id": "77cc1640-290d-4b96-8e3a-eff13d44ddc3",
+      "name": "Read/Write Files from Disk2"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 4
+          },
+          "conditions": [
+            {
+              "id": "11de3d66-811e-4bda-a069-911e7babd72c",
+              "leftValue": "={{ $json.stock }}",
+              "rightValue": "={{ $json.stock_minimo }}",
+              "operator": {
+                "type": "number",
+                "operation": "lt"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.4,
+      "position": [
+        960,
+        160
+      ],
+      "id": "75046d54-6321-4b4c-bc55-161e8bb29980",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://webhook.site/TU-URL-UNICA",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "id",
+              "value": "={{ $json.id }}"
+            },
+            {
+              "name": "nombre",
+              "value": "={{ $json.nombre }}"
+            },
+            {
+              "name": "proveedor",
+              "value": "={{ $json.proveedor }}"
+            },
+            {
+              "name": "stock",
+              "value": "={{ $json.stock }}"
+            },
+            {
+              "name": "a_pedir",
+              "value": "={{ $json.stock_minimo *2 - $json.stock}}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        1440,
+        128
+      ],
+      "id": "b36ae2ee-c9e4-4e82-a4e5-8c13cc237f66",
+      "name": "HTTP Request"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Read/Write Files from Disk",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read/Write Files from Disk": {
+      "main": [
+        [
+          {
+            "node": "Extract from File",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract from File": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "Convert to File",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Filter",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Convert to File": {
+      "main": [
+        [
+          {
+            "node": "Read/Write Files from Disk1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filter": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "Convert to File1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Convert to File1": {
+      "main": [
+        [
+          {
+            "node": "Read/Write Files from Disk2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": true
+  },
+  "versionId": "331c2f38-eb3a-43a7-983c-089e64ea31c8",
+  "meta": {},
+  "nodeGroups": [],
+  "id": "ofGFOXWYMiBJTD66",
+  "tags": []
+}
